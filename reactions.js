@@ -157,6 +157,9 @@ These are the new reactions that this plugin adds to Facebook:
 		throttledFindStories();
 	});
 
+	// test api call
+	$.get('http://reactions.us/getReactions', {id:111}, function (res) {console.log(res)})
+
 
 
 
@@ -203,23 +206,6 @@ These are the new reactions that this plugin adds to Facebook:
 			displayCannotPostReactionMessage($storyElement);
 		}
 	});
-
-	// function mutationCallback (mutationInstances) {
-	// 	//console.log('asd', mutationInstance);
-	// 	mutationInstances.forEach(function (mutationInstance) {
-	// 		console.log('bbb', mutationInstance/*.target /*&& mutationInstance.target.getAttribute('data-ft')*/);
-			
-	// 	});
-	// }
-
-	// // Setup a new observer to get notified of changes
-	// var observer = new MutationObserver(mutationCallback);
-
-	// // Observe a specific DOM node / subtree
-	// observer.observe(document.querySelector('#stream_pagelet'), {
-	// 	subtree: true, 
-	// 	childList: true
-	// });
 
 
 	/**

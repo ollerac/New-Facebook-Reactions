@@ -5,8 +5,8 @@
 	"description": "Express your emotional reactions on Facebook with dislike, express doubt, stare creeplily, throw tomato, etc.",
 	"version": "1.1",
 	"permissions": [
-		"input",
-		"https://www.facebook.com/*"
+		"https://*.facebook.com/*",
+		"http://reactions.us/*"
 	],
 	"web_accessible_resources": [
 		"zepto-1.1.3-extended.min.js",
