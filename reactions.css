@@ -15,12 +15,10 @@
 }
 
 .react-button {
-	position: relative;
-}
-
-strike.react-button {
-	color: #aaa;
-	cursor: help;
+	position: absolute;
+	top: 10px;
+	right: 0;
+	color: #6D84B4;
 }
 
 .little-clickable-buttons {
@@ -28,8 +26,8 @@ strike.react-button {
 	display: none;
 	width: 434px;
 	padding: 5px 8px 3px;
-	top: -58px;
-	left: -9px;
+	top: -48px;
+	right: -7px;
 	background: #fff;
 	border: 1px solid #777;
 	border-radius: 3px;
@@ -56,7 +54,7 @@ strike.react-button {
 	border-right: 8px solid transparent;
 	border-top: 8px solid #777;
 	bottom: -8px;
-	left: 18px;
+	right: 14px;
 }
 
 .little-nub {
@@ -67,7 +65,7 @@ strike.react-button {
 	border-right: 6px solid transparent;
 	border-top: 6px solid #fff;
 	bottom: -6px;
-	left: 20px;
+	right: 16px;
 }
 
 body .reactions-container {

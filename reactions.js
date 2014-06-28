@@ -65,6 +65,7 @@ These are the new reactions that this plugin adds to Facebook:
 	function addReactButtonToStory ($storyElement, $likeButtonElement) {
 		var reactionButtonsHtmlArray = [];
 		var theKeys = Object.keys(reactionSvgsMap);
+		var $theContainer = $likeButtonElement.parents('form').eq(0);
 
 		// assemble reaction buttons!
 		reactionButtonsHtmlArray.push('<span class="little-clickable-buttons">');
@@ -77,22 +78,18 @@ These are the new reactions that this plugin adds to Facebook:
 		reactionButtonsHtmlArray.push('<span class="little-nub"></span>');
 		reactionButtonsHtmlArray.push('</span>');
 
-		var reactButtonHtml = reactionButtonsHtmlArray.join('') + '<a class="react-button">React</a> &#183; ';
+		var reactButtonHtml = reactionButtonsHtmlArray.join('') + '<a class="react-button">React</a>';
 
-		$likeButtonElement
-			.parent()
-			.before(reactButtonHtml)
-			.parent()
+		// calculate position top for react button
+		var topPositionLikeButton = $likeButtonElement.offset().top;
+		var topPositionContainer = $theContainer.offset().top;
+		var topPositionReactButton = topPositionLikeButton - topPositionContainer;
+
+		$theContainer
 			.css('position', 'relative')
-			.css('overflow', 'visible')
-			.parent()
-			.css('overflow', 'visible')
-			.parent()
-			.css('overflow', 'visible')
-			.parent()
-			.css('overflow', 'visible')
-			.parent()
-			.css('overflow', 'visible');
+			.append(reactButtonHtml)
+			.find('.react-button')
+			.css('top', topPositionReactButton + 'px');
 	}
 
 	function addReactButtonObserver () {
@@ -157,16 +154,19 @@ These are the new reactions that this plugin adds to Facebook:
 
 	function aNewStoryWasFound ($storyElement) {
 		$likeButtonElement = $storyElement.find('.UFILikeLink').not('.accessible_elem').first();
-		addReactButtonToStory($storyElement, $likeButtonElement);
-		addReactButtonObserver($storyElement);
-		var $reactionsContainer = addReactionsContainer($likeButtonElement);
-		var storyId = getStoryId($storyElement);
 
-		$storyElement.data('storyId', storyId);
+		if ($likeButtonElement && $likeButtonElement.length) {
+			addReactButtonToStory($storyElement, $likeButtonElement);
+			addReactButtonObserver($storyElement);
+			var $reactionsContainer = addReactionsContainer($likeButtonElement);
+			var storyId = getStoryId($storyElement);
 
-		getReactionsForStory(storyId, function (reactions) {
-			addReactionsToStory(reactions, $reactionsContainer);
-		});
+			$storyElement.data('storyId', storyId);
+
+			getReactionsForStory(storyId, function (reactions) {
+				addReactionsToStory(reactions, $reactionsContainer);
+			});
+		}
 	}
 
 	function addReactionToStory (reactionType, author, $reactionsContainer) {
