@@ -32,6 +32,8 @@ These are the new reactions that this plugin adds to Facebook:
 
 
 (function ($) {
+	var currentAuthor = $('.UFIReplyActorPhotoWrapper img.UFIActorImage').eq(0).attr('alt');
+
 	var reactionSvgsMap = {
 		'dislike': '<svg version="1.1" viewBox="0 0 30 30" preserveAspectRatio="xMinYMin meet"><path style="fill:#FFFFFF;stroke:#000000;stroke-width:0.8;stroke-miterlimit:10;" d="M9.69,8.097c0,0,4.34,0.946,5.508,0	c1.169-0.946,2.504-2.155,3.839-2.247c1.336-0.091,4.841-0.191,5.787,1.333s1.947,6.088,0.667,8.592c0,0-1.983,0.647-4.876,0.591	l0.174,4.473c0,0,0.011,1.629-1.176,1.521c-1.188-0.107-1.417-0.854-1.719-3.747c0,0,0.142-1.28-0.582-2.115	c-0.724-0.835-3.505-1.168-4.284-1.168s-2.616-0.056-2.616-0.056L9.69,8.097z"/><path style="fill:#98ADCA;stroke:#000000;stroke-width:0.8;stroke-miterlimit:10;" d="M5.095,9.988c0,0-0.358-2.781,0.532-3.672	c0.891-0.891,4.006-0.278,4.34,0c0.335,0.278,0.78,2.337,0.78,3.672c0,1.336,0.5,4.619,0.556,5.843c0.036,0.61-0.115,0.947-1,1.112	c-1.225-0.11-4.23,0.667-4.731-0.611C5.07,15.052,5.095,9.988,5.095,9.988z"/></svg>',
 		'hate': '<svg version="1.1" viewBox="0 0 30 30" preserveAspectRatio="xMinYMin meet"><path style="fill:#FFFFFF;stroke:#000000;stroke-width:0.8;stroke-miterlimit:10;" d="M11.752,11.69c0,0,1.066,0.194,1.26-1.842	c0.193-2.034-0.436-4.214,0.727-4.796c1.162-0.582,1.647,0.049,1.841,0.824c0.193,0.776,0.677,3.972,0.581,4.893	c-0.098,0.921,1.113,1.163,1.598,1.211c0.485,0.049,1.938-0.096,2.278,1.26c0.339,1.356,0.048,3.538-0.678,4.506	c-0.727,0.969-1.357,0.629-1.405,3.198c-0.048,2.568,0.048,3.198,0.048,3.198l-6.25-0.339c0,0,0.339-3.44,0-4.312	c-0.34-0.873-1.792-1.211-2.277-2.471c-0.484-1.26-0.726-0.969-0.678-4.167c0,0,0.291-0.921,1.163-1.115	C10.831,11.545,11.752,11.69,11.752,11.69z"/><path style="fill:#98ADCA;stroke:#000000;stroke-width:0.8;stroke-miterlimit:10;" d="M18.875,21.961c0,0-7.462-0.484-8.77,0	c0,0-0.388,0.729-0.388,2.181s0.388,1.89,0.873,2.035c0.485,0.145,7.606,0,8.285-0.243C19.553,25.693,19.166,22.301,18.875,21.961z"	/></svg>',
@@ -50,12 +52,14 @@ These are the new reactions that this plugin adds to Facebook:
 	var storyArchive = [];
 
 	function findStories () {
-		$('[data-insertion-position]').forEach(function (element) {
-			if (storyArchive.indexOf(element) < 0) {
-				aNewStoryWasFound($(element));
-				storyArchive.push(element);
-			}
-		})
+		if (window.location.pathname === "/") {
+			$('[data-insertion-position]').forEach(function (element) {
+				if (storyArchive.indexOf(element) < 0) {
+					aNewStoryWasFound($(element));
+					storyArchive.push(element);
+				}
+			})
+		}
 	}
 
 	function addReactButtonToStory ($storyElement, $likeButtonElement) {
@@ -95,24 +99,77 @@ These are the new reactions that this plugin adds to Facebook:
 		// todo!
 	}
 
-	function addReactionsContainer ($storyElement, $likeButtonElement) {
-		$likeButtonElement
-			.parents('.clearfix')
-			.eq(0)
-			.after('<div class="UFIRow reactions-container"></div>');
+	function addReactionsContainer ($likeButtonElement) {
+		return $likeButtonElement
+				.parents('.clearfix')
+				.eq(0)
+				.after('<div class="UFIRow reactions-container"></div>')
+				.parent()
+				.find('.reactions-container')
+				.eq(0);
+	}
+
+	function getStoryId ($storyElement) {
+		var dataFt = $($storyElement).attr('data-ft');
+
+		if (dataFt) {
+			var dataFtObject = JSON.parse(dataFt);
+
+			if (Zepto.isPlainObject(dataFtObject) && dataFtObject.mf_story_key) {
+				return dataFtObject.mf_story_key;
+			}
+		}
+
+		return null;
+	}
+
+	function getReactionsForStory (storyId, callback) {
+		if (storyId) {
+			chrome.runtime.sendMessage({
+				method: "GET",
+				action: "xhttp",
+				url: "http://reactions.us/getReactions",
+				data: {id: storyId}
+			}, function(reactions) {
+				callback(reactions);
+			});
+		} else {
+			return null;
+		}
+	}
+
+	function saveReaction (reactionType, author, storyId) {
+		if (reactionType && author && storyId) {
+			chrome.runtime.sendMessage({
+				method: "POST",
+				action: "xhttp",
+				url: "http://reactions.us/setReaction",
+				data: {
+					id: storyId, 
+					reaction: reactionType,
+					author: author
+				}
+			}, function(response) {
+				console.log('YAYAYA!', response);
+			});
+		}
 	}
 
 	function aNewStoryWasFound ($storyElement) {
 		$likeButtonElement = $storyElement.find('.UFILikeLink').not('.accessible_elem').first();
-
 		addReactButtonToStory($storyElement, $likeButtonElement);
 		addReactButtonObserver($storyElement);
-		addReactionsContainer($storyElement, $likeButtonElement);
+		var $reactionsContainer = addReactionsContainer($likeButtonElement);
+		var storyId = getStoryId($storyElement);
+
+		$storyElement.data('storyId', storyId);
+
+		getReactionsForStory(storyId, function (reactions) {
+			addReactionsToStory(reactions, $reactionsContainer);
+		});
 	}
 
-	function addReactionToStory (reactionType, $storyElement) {
-		var $reactionsContainer = $storyElement.find('.reactions-container').first();
-
+	function addReactionToStory (reactionType, author, $reactionsContainer) {
 		// add images
 		var $littleContainer = $('<div class="little-container"></div');
 		$littleContainer
@@ -129,7 +186,17 @@ These are the new reactions that this plugin adds to Facebook:
 
 		$reactionsContainer
 			.append($littleContainer)
-			.addClass('has-reactions');
+			.addClass('has-reactions');		
+	}
+
+	function addReactionsToStory (reactions, $reactionsContainer) {
+		var reactionsNames = Object.keys(reactions);
+
+		reactionsNames.forEach(function (reactionName) {
+			reactions[reactionName].forEach(function (author) {
+				addReactionToStory(reactionName, author, $reactionsContainer);
+			});
+		});
 	}
 
 	function checkIfReactionIsAlreadyThere (storyId, reactionType) {
@@ -158,10 +225,7 @@ These are the new reactions that this plugin adds to Facebook:
 	});
 
 	// test api call
-	$.get('http://reactions.us/getReactions', {id:111}, function (res) {console.log(res)})
-
-
-
+	
 
 	/***************************************
 	 *                                     *
@@ -197,13 +261,15 @@ These are the new reactions that this plugin adds to Facebook:
 		var $littleClickableButton = $(this);
 		var reactionType = $littleClickableButton.attr('title');
 		var $storyElement = $littleClickableButton.parents('[data-insertion-position]').first();
-		var storyId = 0; //todo
+		var storyId = $storyElement.data('storyId');
 		var reactionIsAlreadyThere = checkIfReactionIsAlreadyThere(storyId, reactionType);
+		var $reactionsContainer = $storyElement.find('.reactions-container').first();
 
 		if (!reactionIsAlreadyThere) {
-			addReactionToStory(reactionType, $storyElement);
+			addReactionToStory(reactionType, currentAuthor, $reactionsContainer);
+			saveReaction(reactionType, currentAuthor, storyId);
 		} else {
-			displayCannotPostReactionMessage($storyElement);
+			displayCannotPostReactionMessage($reactionsContainer);
 		}
 	});
 
