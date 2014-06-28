@@ -147,7 +147,7 @@ These are the new reactions that this plugin adds to Facebook:
 					author: author
 				}
 			}, function(response) {
-				console.log('YAYAYA!', response);
+				// console.log('YAYAYA!', response);
 			});
 		}
 	}
@@ -164,37 +164,57 @@ These are the new reactions that this plugin adds to Facebook:
 			$storyElement.data('storyId', storyId);
 
 			getReactionsForStory(storyId, function (reactions) {
-				addReactionsToStory(reactions, $reactionsContainer);
+				addReactionsToStory(reactions, $reactionsContainer, $storyElement);
 			});
 		}
 	}
 
-	function addReactionToStory (reactionType, author, $reactionsContainer) {
-		// add images
-		var $littleContainer = $('<div class="little-container"></div');
-		$littleContainer
-			.attr('title', reactionType)
-			.addClass('bounce-it-out');
+	function addReactionToStory (reactionType, author, $reactionsContainer, $storyElement) {
+		var reactionCount = $storyElement.data('storyReactions')[reactionType].length;
+		var $existingReaction = $reactionsContainer.children('.little-container[title=' + reactionType + ']').eq(0);
 
-		var $svg = $(reactionSvgsMap[reactionType]);
+		if ($existingReaction && $existingReaction.length) {
+			var $litteNumber = $existingReaction
+								.removeClass('bounce-it-out')
+								.children('.little-number');
 
-		//var $littleNumber = $('<div class="little-number">' + individualMatch.count + '</div>')
+			setTimeout(function () {
+				$litteNumber
+					.text(reactionCount);
 
-		$littleContainer
-			.append($svg);
-			//.append($littleNumber);
+				$existingReaction
+					.addClass('bounce-it-out');
+			}, 1);
 
-		$reactionsContainer
-			.append($littleContainer)
-			.addClass('has-reactions');		
+		} else {
+			// add images
+			var $littleContainer = $('<div class="little-container"></div');
+			$littleContainer
+				.attr('title', reactionType)
+				.addClass('bounce-it-out');
+
+			var $svg = $(reactionSvgsMap[reactionType]);
+
+			var $littleNumber = $('<div class="little-number">' + reactionCount + '</div>')
+
+			$littleContainer
+				.append($svg)
+				.append($littleNumber);
+
+			$reactionsContainer
+				.append($littleContainer)
+				.addClass('has-reactions');	// necessary for css	
+		}
 	}
 
-	function addReactionsToStory (reactions, $reactionsContainer) {
+	function addReactionsToStory (reactions, $reactionsContainer, $storyElement) {
+		$storyElement.data('storyReactions', reactions);
+
 		var reactionsNames = Object.keys(reactions);
 
 		reactionsNames.forEach(function (reactionName) {
 			reactions[reactionName].forEach(function (author) {
-				addReactionToStory(reactionName, author, $reactionsContainer);
+				addReactionToStory(reactionName, author, $reactionsContainer, $storyElement);
 			});
 		});
 	}
@@ -266,7 +286,22 @@ These are the new reactions that this plugin adds to Facebook:
 		var $reactionsContainer = $storyElement.find('.reactions-container').first();
 
 		if (!reactionIsAlreadyThere) {
-			addReactionToStory(reactionType, currentAuthor, $reactionsContainer);
+			var storyReactions = $storyElement.data('storyReactions');
+
+			if (storyReactions) {
+				if (storyReactions[reactionType]) {
+					storyReactions[reactionType].push(currentAuthor);
+				} else {
+					storyReactions[reactionType] = [currentAuthor];
+				}
+			} else {
+				var newStoryReactions = [];
+				newStoryReactions[reactionType] = [currentAuthor];
+
+				$storyElement.data('storyReactions', newStoryReactions);
+			}
+
+			addReactionToStory(reactionType, currentAuthor, $reactionsContainer, $storyElement);
 			saveReaction(reactionType, currentAuthor, storyId);
 		} else {
 			displayCannotPostReactionMessage($reactionsContainer);
