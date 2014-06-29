@@ -171,7 +171,7 @@ These are the new reactions that this plugin adds to Facebook:
 
 	function addReactionToStory (reactionType, author, $reactionsContainer, $storyElement) {
 		var reactionCount = $storyElement.data('storyReactions')[reactionType].length;
-		var $existingReaction = $reactionsContainer.children('.little-container[title=' + reactionType + ']').eq(0);
+		var $existingReaction = $reactionsContainer.children('.little-container[title="' + reactionType + '"]').eq(0);
 
 		if ($existingReaction && $existingReaction.length) {
 			var $litteNumber = $existingReaction
