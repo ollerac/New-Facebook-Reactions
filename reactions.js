@@ -147,7 +147,7 @@ These are the new reactions that this plugin adds to Facebook:
 					author: author
 				}
 			}, function(response) {
-				// console.log('YAYAYA!', response);
+				// do something here?
 			});
 		}
 	}
@@ -170,8 +170,20 @@ These are the new reactions that this plugin adds to Facebook:
 	}
 
 	function addReactionToStory (reactionType, author, $reactionsContainer, $storyElement) {
-		var reactionCount = $storyElement.data('storyReactions')[reactionType].length;
-		var $existingReaction = $reactionsContainer.children('.little-container[title="' + reactionType + '"]').eq(0);
+		var reactions = $storyElement.data('storyReactions');
+		var reactionAuthors = reactions[reactionType];
+		var reactionCount = reactionAuthors.length;
+		var $existingReaction = $reactionsContainer.children('.little-container[data-reaction-type="' + reactionType + '"]').eq(0);
+		var titleString = reactionType.capitalize();
+
+		// transform string of authors to title
+		if (reactionAuthors.length > 1) {
+			var newReactionAuthors = reactionAuthors.slice();
+			newReactionAuthors[newReactionAuthors.length - 1] = 'and ' + newReactionAuthors[newReactionAuthors.length - 1];
+			titleString = reactionType.capitalize() + ' by ' + newReactionAuthors.join(', ');
+		} else if (reactionAuthors.length === 1) {
+			titleString = reactionType.capitalize() + ' by ' + reactionAuthors[0];
+		}
 
 		if ($existingReaction && $existingReaction.length) {
 			var $litteNumber = $existingReaction
@@ -183,6 +195,8 @@ These are the new reactions that this plugin adds to Facebook:
 					.text(reactionCount);
 
 				$existingReaction
+					.attr('title', titleString)
+					.attr('data-reaction-type', reactionType)
 					.addClass('bounce-it-out');
 			}, 1);
 
@@ -190,7 +204,8 @@ These are the new reactions that this plugin adds to Facebook:
 			// add images
 			var $littleContainer = $('<div class="little-container"></div');
 			$littleContainer
-				.attr('title', reactionType)
+				.attr('title', titleString)
+				.attr('data-reaction-type', reactionType)
 				.addClass('bounce-it-out');
 
 			var $svg = $(reactionSvgsMap[reactionType]);
@@ -345,6 +360,10 @@ These are the new reactions that this plugin adds to Facebook:
 			}
 			return result;
 		};
+	};
+
+	String.prototype.capitalize = function() {
+	    return this.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
 	};
 
 })(Zepto);
