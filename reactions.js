@@ -330,6 +330,24 @@ These are the new reactions that this plugin adds to Facebook:
 		}, 5000);
 	}
 
+	function countTotalNumberOfReactions (storyReactions) {
+		if ($.isPlainObject(storyReactions)) {
+			var reactionNames = Object.keys(storyReactions);
+			var totalNumber = 0;
+
+			reactionNames.forEach(function (reactionName) {
+				if (storyReactions[reactionName] && storyReactions[reactionName].length) {
+					totalNumber = totalNumber + storyReactions[reactionName].length;
+				}
+			});
+
+			return totalNumber;
+
+		} else {
+			return 0;
+		}
+	}
+
 
 	/***************************************
 	 *                                     *
