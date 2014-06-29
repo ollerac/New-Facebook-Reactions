@@ -127,8 +127,10 @@ These are the new reactions that this plugin adds to Facebook:
 				action: "xhttp",
 				url: "http://reactions.us/getReactions",
 				data: {id: storyId}
-			}, function(reactions) {
-				callback(reactions);
+			}, function(response) {
+				if (response.success && response.data) {
+					callback(response.data);
+				}
 			});
 		} else {
 			return null;
@@ -148,6 +150,23 @@ These are the new reactions that this plugin adds to Facebook:
 				}
 			}, function(response) {
 				// do something here?
+			});
+		}
+	}
+
+	function deleteReaction (reactionType, author, storyId) {
+		if (reactionType && author && storyId) {
+			chrome.runtime.sendMessage({
+				method: "POST",
+				action: "xhttp",
+				url: "http://reactions.us/deleteReaction",
+				data: {
+					id: storyId, 
+					reaction: reactionType,
+					author: author
+				}
+			}, function(response) {
+				console.log(response);
 			});
 		}
 	}
@@ -175,6 +194,7 @@ These are the new reactions that this plugin adds to Facebook:
 		var reactionCount = reactionAuthors.length;
 		var $existingReaction = $reactionsContainer.children('.little-container[data-reaction-type="' + reactionType + '"]').eq(0);
 		var titleString = reactionType.capitalize();
+		var canDeleteReaction = reactionAuthors.indexOf(currentAuthor) >= 0;
 
 		// transform string of authors to title
 		if (reactionAuthors.length > 1) {
@@ -198,6 +218,10 @@ These are the new reactions that this plugin adds to Facebook:
 					.attr('title', titleString)
 					.attr('data-reaction-type', reactionType)
 					.addClass('bounce-it-out');
+
+				if (canDeleteReaction) {
+					$existingReaction.attr('data-can-delete-reaction', '');
+				}
 			}, 1);
 
 		} else {
@@ -208,13 +232,19 @@ These are the new reactions that this plugin adds to Facebook:
 				.attr('data-reaction-type', reactionType)
 				.addClass('bounce-it-out');
 
+			if (canDeleteReaction) {
+				$littleContainer.attr('data-can-delete-reaction', '');
+			}
+
 			var $svg = $(reactionSvgsMap[reactionType]);
+			var $deleteButton = $('<a class="delete"></a>');
 
 			var $littleNumber = $('<div class="little-number">' + reactionCount + '</div>')
 
 			$littleContainer
 				.append($svg)
-				.append($littleNumber);
+				.append($littleNumber)
+				.append($deleteButton);
 
 			$reactionsContainer
 				.append($littleContainer)
@@ -338,6 +368,21 @@ These are the new reactions that this plugin adds to Facebook:
 		} else {
 			displayCannotPostReactionMessage($reactionsContainer);
 		}
+	});
+
+	$('body').on('click', '.little-container[data-can-delete-reaction] .delete', function (event) {
+		var $deleteButton = $(this);
+		var $littleContainer = $deleteButton.parent();
+		var $storyElement = $littleContainer.parents('[data-insertion-position]').first();
+		var storyId = $storyElement.data('storyId');
+		var reactionType = $littleContainer.attr('data-reaction-type');
+
+		console.log(reactionType, storyId);
+
+		if (reactionType && storyId) {
+			deleteReaction(reactionType, currentAuthor, storyId);
+		}
+
 	});
 
 

@@ -13,20 +13,16 @@ chrome.runtime.onMessage.addListener(function(request, sender, callback) {
     if (request.action == "xhttp") {
         var method = request.method ? request.method.toUpperCase() : 'GET';
         if (method == 'POST') {
-			$.post('http://reactions.us/setReaction', request.data, function (response) {
-				if (response.success) {
+			$.post(request.url, request.data, function (response) {
+				if (callback) {
 					callback(response);
 				}
 			})
 
         } else {
-			$.get('http://reactions.us/getReactions', request.data, function (response) {
-				if (response.success && response.data) {
-					var reactions = response.data;
-
-					if (callback) {
-						callback(reactions);
-					}
+			$.get(request.url, request.data, function (response) {
+				if (callback) {
+					callback(response);
 				}
 			});
 	    }
