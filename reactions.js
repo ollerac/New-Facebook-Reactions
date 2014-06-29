@@ -234,12 +234,30 @@ These are the new reactions that this plugin adds to Facebook:
 		});
 	}
 
-	function checkIfReactionIsAlreadyThere (storyId, reactionType) {
-		//todo
+	function checkIfReactionIsAlreadyThere (reactionType, currentAuthor, storyReactions) {
+		if (typeof reactionType === 'string' && typeof currentAuthor === 'string' && $.isPlainObject(storyReactions)) {
+			var reactionAuthors = storyReactions[reactionType];
+
+			if (Array.isArray(reactionAuthors) && reactionAuthors.indexOf(currentAuthor) >= 0) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
-	function displayCannotPostReactionMessage ($storyElement) {
-		//todo
+	function displayCannotPostReactionMessage ($reactionsContainer) {
+		var $msg = $('<div class="reaction-add-error">Please don\'t post the same reaction on the same post more than once.</div>');
+
+		$reactionsContainer.append($msg);
+
+		setTimeout(function () {
+			$msg.addClass('load');
+		}, 0);
+
+		setTimeout(function () {
+			$msg.remove();
+		}, 5000);
 	}
 
 
@@ -297,12 +315,11 @@ These are the new reactions that this plugin adds to Facebook:
 		var reactionType = $littleClickableButton.attr('title');
 		var $storyElement = $littleClickableButton.parents('[data-insertion-position]').first();
 		var storyId = $storyElement.data('storyId');
-		var reactionIsAlreadyThere = checkIfReactionIsAlreadyThere(storyId, reactionType);
+		var storyReactions = $storyElement.data('storyReactions');
+		var reactionIsAlreadyThere = checkIfReactionIsAlreadyThere(reactionType, currentAuthor, storyReactions);
 		var $reactionsContainer = $storyElement.find('.reactions-container').first();
 
 		if (!reactionIsAlreadyThere) {
-			var storyReactions = $storyElement.data('storyReactions');
-
 			if (storyReactions) {
 				if (storyReactions[reactionType]) {
 					storyReactions[reactionType].push(currentAuthor);
