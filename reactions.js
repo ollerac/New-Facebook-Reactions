@@ -166,7 +166,7 @@ These are the new reactions that this plugin adds to Facebook:
 					author: author
 				}
 			}, function(response) {
-				console.log(response);
+				// do something here?
 			});
 		}
 	}
@@ -250,6 +250,42 @@ These are the new reactions that this plugin adds to Facebook:
 				.append($littleContainer)
 				.addClass('has-reactions');	// necessary for css	
 		}
+	}
+
+	function removeReactionFromContainer (reactionType, author, authorWasRemoved, storyReactions, $reactionsContainer, $storyElement) {
+		if (storyReactions && storyReactions[reactionType] && storyReactions[reactionType].length === 0) {
+			// if it's the only reaction of its type
+			$reactionsContainer
+				.children('.little-container[data-reaction-type="' + reactionType + '"]')
+				.eq(0)
+				.remove();
+
+			var numberOfReactionsTotal = $reactionsContainer.children('.little-container').length;
+
+			if (numberOfReactionsTotal === 0) {
+				$reactionsContainer.removeClass('has-reactions');
+			}
+
+		} else if (storyReactions && storyReactions[reactionType] && storyReactions[reactionType].length > 0 && authorWasRemoved) {
+			// if there is more than one reaction of this type
+			var $littleContainer = $reactionsContainer
+									.children('.little-container[data-reaction-type="' + reactionType + '"]')
+									.eq(0);
+
+			var $littleNumber = $littleContainer
+								.children('.little-number')
+								.eq(0);
+
+			var textNumber = $littleNumber
+								.text();
+
+			var reactionNumber = parseInt(textNumber, 10);
+
+			if (reactionNumber === reactionNumber && reactionNumber > 1) {
+				littleNumber.text(reactionNumber - 1);
+			}
+		}
+
 	}
 
 	function addReactionsToStory (reactions, $reactionsContainer, $storyElement) {
@@ -376,11 +412,20 @@ These are the new reactions that this plugin adds to Facebook:
 		var $storyElement = $littleContainer.parents('[data-insertion-position]').first();
 		var storyId = $storyElement.data('storyId');
 		var reactionType = $littleContainer.attr('data-reaction-type');
-
-		console.log(reactionType, storyId);
+		var storyReactions = $storyElement.data('storyReactions');
+		var $reactionsContainer = $storyElement.find('.reactions-container').first();
 
 		if (reactionType && storyId) {
+			var indexOfAuthor = storyReactions[reactionType].indexOf(currentAuthor);
+			var authorWasRemoved = false;
+
+			if (storyReactions[reactionType] && indexOfAuthor >= 0) {
+				storyReactions[reactionType].splice(indexOfAuthor, 1);
+				authorWasRemoved = true;
+			}
+
 			deleteReaction(reactionType, currentAuthor, storyId);
+			removeReactionFromContainer(reactionType, currentAuthor, authorWasRemoved, storyReactions, $reactionsContainer, $storyElement);
 		}
 
 	});
