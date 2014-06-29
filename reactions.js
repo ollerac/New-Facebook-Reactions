@@ -53,8 +53,12 @@ These are the new reactions that this plugin adds to Facebook:
 
 	function findStories () {
 		if (window.location.pathname === "/") {
-			$('[data-insertion-position]').forEach(function (element) {
-				if (storyArchive.indexOf(element) < 0) {
+			var filteredStories = $('[data-insertion-position]').filter(function (index) {
+				return !$(this).find('.uiCollapsedList').length;
+			});
+
+			filteredStories.forEach(function (element) {
+				if (storyArchive.indexOf(element) === -1) {
 					aNewStoryWasFound($(element));
 					storyArchive.push(element);
 				}
@@ -180,7 +184,7 @@ These are the new reactions that this plugin adds to Facebook:
 			var $reactionsContainer = addReactionsContainer($likeButtonElement);
 			var storyId = getStoryId($storyElement);
 
-			$storyElement.data('storyId', storyId);
+			$storyElement.attr('data-story-reaction-id', storyId);
 
 			getReactionsForStory(storyId, function (reactions) {
 				addReactionsToStory(reactions, $reactionsContainer, $storyElement);
@@ -333,18 +337,29 @@ These are the new reactions that this plugin adds to Facebook:
 	 *                                     *
 	 ***************************************/
 
+	var startedScrolling = false;
 	var throttledFindStories = throttle(findStories, 200);
 
-	 // on load
-	throttledFindStories();
+	function storiesAreLoaded (callback) {
+		if (!startedScrolling) {
+			if ($('[data-insertion-position]').length) {
+				if (callback) {
+					callback();
+				}
+			} else {
+				setTimeout(function () {
+					storiesAreLoaded(callback);
+				}, 300);
+			}
+		}
+	}
 
+	storiesAreLoaded(throttledFindStories);
 
 	$(window).scroll(function () {
+		var startedScrolling = true;
 		throttledFindStories();
-	});
-
-	// test api call
-	
+	});	
 
 	/***************************************
 	 *                                     *
@@ -380,7 +395,7 @@ These are the new reactions that this plugin adds to Facebook:
 		var $littleClickableButton = $(this);
 		var reactionType = $littleClickableButton.attr('title');
 		var $storyElement = $littleClickableButton.parents('[data-insertion-position]').first();
-		var storyId = $storyElement.data('storyId');
+		var storyId = $storyElement.attr('data-story-reaction-id');
 		var storyReactions = $storyElement.data('storyReactions');
 		var reactionIsAlreadyThere = checkIfReactionIsAlreadyThere(reactionType, currentAuthor, storyReactions);
 		var $reactionsContainer = $storyElement.find('.reactions-container').first();
@@ -410,7 +425,7 @@ These are the new reactions that this plugin adds to Facebook:
 		var $deleteButton = $(this);
 		var $littleContainer = $deleteButton.parent();
 		var $storyElement = $littleContainer.parents('[data-insertion-position]').first();
-		var storyId = $storyElement.data('storyId');
+		var storyId = $storyElement.attr('data-story-reaction-id');
 		var reactionType = $littleContainer.attr('data-reaction-type');
 		var storyReactions = $storyElement.data('storyReactions');
 		var $reactionsContainer = $storyElement.find('.reactions-container').first();
