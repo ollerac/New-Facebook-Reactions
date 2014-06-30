@@ -348,6 +348,20 @@ These are the new reactions that this plugin adds to Facebook:
 		}
 	}
 
+	function askToPostNotificationToStory ($storyElement) {
+		console.log('ji');
+		var $overlay = $('<div id="reactions-ask-to-notify-overlay"></div>');
+
+		var $notification = $('<div id="reactions-ask-to-notify"></div>');
+		$notification
+			.html("<p>This is the third reaction posted to this story, but the author won't be able to see it if they don't have this plugin installed.</p><p>Would you like to post a comment that will let them know about these reactions?</p><a class='post-notification'>Yes, let them know</a><a class='close-modal'>No, I'd rather not</a>")
+			.data('storyElement', $storyElement);
+
+		$('body')
+			.append($overlay)
+			.append($notification);
+	}
+
 
 	/***************************************
 	 *                                     *
@@ -434,6 +448,11 @@ These are the new reactions that this plugin adds to Facebook:
 
 			addReactionToStory(reactionType, currentAuthor, $reactionsContainer, $storyElement);
 			saveReaction(reactionType, currentAuthor, storyId);
+
+			// pop the popup
+			if (countTotalNumberOfReactions(storyReactions) === 3) {
+				askToPostNotificationToStory($storyElement);
+			}
 		} else {
 			displayCannotPostReactionMessage($reactionsContainer);
 		}
@@ -462,6 +481,58 @@ These are the new reactions that this plugin adds to Facebook:
 		}
 
 	});
+
+	$('body').on('click', '#reactions-ask-to-notify-overlay, #reactions-ask-to-notify .close-modal', function (event) {
+		$('#reactions-ask-to-notify-overlay').remove();
+		$('#reactions-ask-to-notify').remove();
+	});
+
+	$('body').on('click', '#reactions-ask-to-notify .post-notification', function (event) {	
+		var $postNotificationButton = $(this);
+		var $modal = $postNotificationButton.parent('#reactions-ask-to-notify');
+		var $storyElement = $modal.data('storyElement');
+		var storyId = $storyElement.attr('data-story-reaction-id');
+		var $commentActionButton = $storyElement.find('.uiLinkButtonInput[value="Comment"]').eq(0);
+
+		$('#reactions-ask-to-notify-overlay').remove();
+		$('#reactions-ask-to-notify').remove();
+
+		// get topLevelCommentArea
+		var $topLevelCommentArea = null;
+		$storyElement.find('.UFIAddCommentInput').each(function (index, element) {
+			var $element = $(element);
+
+			if ($element.text().trim() === "Write a comment...") {
+				$topLevelCommentArea = $element;
+			}
+		});
+
+		if ($topLevelCommentArea && $topLevelCommentArea.length) {
+			$commentActionButton.click();
+
+			checkIfCommentAreaIsVisible($topLevelCommentArea).done(function () {
+				$topLevelCommentArea
+					.val('You have 3 new reactions on this post. See them here: http://reactions.us/story/' + storyId);
+			});
+		}
+	});	
+
+	function checkIfCommentAreaIsVisible ($topLevelCommentArea, deferred, howManyTimesToCheck) {
+		var commentAreaIsVisible = deferred || $.Deferred();
+		var secondsToCheck = 2;
+		var msIntervalToCheck = 100;
+		var howManyTimesToCheck = typeof timesLeft === 'undefined' ? parseInt((secondsToCheck * 1000) / msIntervalToCheck) - 1 : timesLeft - 1;
+
+		if ($topLevelCommentArea.css('display') !== 'none') {
+			commentAreaIsVisible.resolve();
+		} else {
+			setTimeout(function () {
+				checkIfCommentAreaIsVisible($topLevelCommentArea, commentAreaIsVisible, howManyTimesToCheck);
+			}, msIntervalToCheck);
+		}
+
+		return commentAreaIsVisible;
+	}
 
 
 	/**
