@@ -449,7 +449,6 @@ These are the new reactions that this plugin adds to Facebook:
 			saveReaction(reactionType, currentAuthor, storyId);
 
 			// pop the popup
-			console.log(storyReactions);
 			if (countTotalNumberOfReactions(storyReactions) === 3) {
 				askToPostNotificationToStory($storyElement);
 			}
