@@ -6,7 +6,6 @@ A chrome plugin that lets you add some awesome new emotive reactions to the main
 ![reactions demo](https://s3.amazonaws.com/webnet/fb-plugin/react-demo.png)
 
 
-
 The Reactins
 ============
 
@@ -22,7 +21,6 @@ The Reactins
 - incite rebellion
 - pass joint
 - throw tomato
-
 
 
 Credit:
