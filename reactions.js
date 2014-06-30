@@ -349,7 +349,6 @@ These are the new reactions that this plugin adds to Facebook:
 	}
 
 	function askToPostNotificationToStory ($storyElement) {
-		console.log('ji');
 		var $overlay = $('<div id="reactions-ask-to-notify-overlay"></div>');
 
 		var $notification = $('<div id="reactions-ask-to-notify"></div>');
@@ -440,16 +439,17 @@ These are the new reactions that this plugin adds to Facebook:
 					storyReactions[reactionType] = [currentAuthor];
 				}
 			} else {
-				var newStoryReactions = [];
-				newStoryReactions[reactionType] = [currentAuthor];
+				storyReactions = {};
+				storyReactions[reactionType] = [currentAuthor];
 
-				$storyElement.data('storyReactions', newStoryReactions);
+				$storyElement.data('storyReactions', storyReactions);
 			}
 
 			addReactionToStory(reactionType, currentAuthor, $reactionsContainer, $storyElement);
 			saveReaction(reactionType, currentAuthor, storyId);
 
 			// pop the popup
+			console.log(storyReactions);
 			if (countTotalNumberOfReactions(storyReactions) === 3) {
 				askToPostNotificationToStory($storyElement);
 			}
@@ -512,7 +512,8 @@ These are the new reactions that this plugin adds to Facebook:
 
 			checkIfCommentAreaIsVisible($topLevelCommentArea).done(function () {
 				$topLevelCommentArea
-					.val('You have 3 new reactions on this post. See them here: http://reactions.us/story/' + storyId);
+					.val('You have 3 new reactions on this post. See them here: http://reactions.us/story/' + storyId)
+					.css('min-height', '45px');
 			});
 		}
 	});	
