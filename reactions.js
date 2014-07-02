@@ -137,11 +137,19 @@ These are the new reactions that this plugin adds to Facebook:
 		}
 	}
 
-	function addReactionsContainer ($likeButtonElement) {
+	function addReactionsContainer ($likeButtonElement, page) {
+		var html;
+
+		if (page === 'profile') {
+			html = '<div class="UFIRow reactions-container on-profile"></div>';
+		} else {
+			html = '<div class="UFIRow reactions-container"></div>';
+		}
+
 		return $likeButtonElement
 				.parents('.clearfix')
 				.eq(0)
-				.after('<div class="UFIRow reactions-container"></div>')
+				.after(html)
 				.parent()
 				.find('.reactions-container')
 				.eq(0);
@@ -218,7 +226,7 @@ These are the new reactions that this plugin adds to Facebook:
 
 		if ($likeButtonElement && $likeButtonElement.length) {
 			addReactButtonToStory($storyElement, $likeButtonElement, page);
-			var $reactionsContainer = addReactionsContainer($likeButtonElement);
+			var $reactionsContainer = addReactionsContainer($likeButtonElement, page);
 			var storyId = getStoryId($storyElement);
 
 			$storyElement.attr('data-story-reaction-id', storyId);

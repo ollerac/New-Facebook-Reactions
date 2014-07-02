@@ -130,6 +130,13 @@ body .reactions-container.has-reactions {
 	padding: 5px 7px 8px 7px;
 }
 
+body .reactions-container.has-reactions.on-profile, body .timelineUnitContainer .reactions-container.has-reactions.on-profile {
+	margin: 10px -12px 0 -12px;
+	padding: 4px 5px 10px 5px;
+	border-top: 1px solid #E1E2E3;
+	border-bottom: 1px solid #E1E2E3;
+}
+
 /* clearfix */
 .reactions-container:before,
 .reactions-container:after {
