@@ -59,7 +59,7 @@ These are the new reactions that this plugin adds to Facebook:
 			// home page
 			$stories = $('[data-insertion-position]');
 			page = 'home';
-		} else if ($('a[href="' + window.location.href + '/friends"]').length > 2) {
+		} else if ($('a[href="' + window.location.href.replace(/\?.*/, '') + '/friends"]').length > 2) {
 			// profile page
 			$stories = $('.fbTimelineUnit');
 			page = 'profile';
@@ -70,6 +70,7 @@ These are the new reactions that this plugin adds to Facebook:
 		}
 
 		if ($stories && $stories.length) {
+
 			var filteredStories = $stories.filter(function (index) {
 				return !$(this).find('.uiCollapsedList').length;
 			});
@@ -156,17 +157,19 @@ These are the new reactions that this plugin adds to Facebook:
 	}
 
 	function getStoryId ($storyElement) {
-		var dataFt = $($storyElement).attr('data-ft');
+		var storyId = $storyElement
+						.find('.clearfix')
+						.first()
+						.find('abbr')
+						.first()
+						.parent()
+						.attr('href');
 
-		if (dataFt) {
-			var dataFtObject = JSON.parse(dataFt);
-
-			if (Zepto.isPlainObject(dataFtObject) && dataFtObject.mf_story_key) {
-				return dataFtObject.mf_story_key;
-			}
+		if (typeof storyId === 'string') {
+			return storyId.replace(/^https:\/\/www\.facebook\.com/, '');
+		} else {
+			return null;
 		}
-
-		return null;
 	}
 
 	function getReactionsForStory (storyId, callback) {
@@ -221,19 +224,19 @@ These are the new reactions that this plugin adds to Facebook:
 	}
 
 	function aNewStoryWasFound ($storyElement, page) {
-		console.log(123);
 		$likeButtonElement = $storyElement.find('.UFILikeLink').not('.accessible_elem').first();
 
 		if ($likeButtonElement && $likeButtonElement.length) {
-			addReactButtonToStory($storyElement, $likeButtonElement, page);
-			var $reactionsContainer = addReactionsContainer($likeButtonElement, page);
 			var storyId = getStoryId($storyElement);
 
-			$storyElement.attr('data-story-reaction-id', storyId);
-
-			getReactionsForStory(storyId, function (reactions) {
-				addReactionsToStory(reactions, $reactionsContainer, $storyElement);
-			});
+			if (storyId) {
+				addReactButtonToStory($storyElement, $likeButtonElement, page);
+				var $reactionsContainer = addReactionsContainer($likeButtonElement, page);
+				$storyElement.attr('data-story-reaction-id', storyId);
+				getReactionsForStory(storyId, function (reactions) {
+					addReactionsToStory(reactions, $reactionsContainer, $storyElement);
+				});
+			}
 		}
 	}
 
