@@ -246,9 +246,12 @@ These are the new reactions that this plugin adds to Facebook:
 				&& typeof storyId == 'string'
 				&& storyId.length > 3
 				&& !$storyElement.find('.react-button').length) {
-					addReactButtonToStory($storyElement, $likeButtonElement, page);
-					var $reactionsContainer = addReactionsContainer($likeButtonElement, page);
 					$storyElement.attr('data-story-reaction-id', storyId);
+
+					addReactButtonToStory($storyElement, $likeButtonElement, page);
+
+					var $reactionsContainer = addReactionsContainer($likeButtonElement, page);
+
 					getReactionsForStory(storyId, function (reactions) {
 						addReactionsToStory(reactions, $reactionsContainer, $storyElement);
 					});
