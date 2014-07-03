@@ -115,7 +115,7 @@
 	left: -9px;
 }
 
-body .reactions-container {
+body .reactions-container, #facebook body .timelineUnitContainer .reactions-container {
 	background-color: #ffffff;
 	z-index: 100;
 	position: relative;
@@ -123,14 +123,14 @@ body .reactions-container {
 	padding: 0;
 }
 
-body .reactions-container.has-reactions {
+body .reactions-container.has-reactions, #facebook body .reactions-container.has-reactions {
 	border-bottom: 1px solid #E1E2E3;
 	border-top: 1px solid #E1E2E3;
 	margin: 10px -12px -9px -12px;
 	padding: 5px 7px 8px 7px;
 }
 
-body .reactions-container.has-reactions.on-profile, body .timelineUnitContainer .reactions-container.has-reactions.on-profile {
+body .reactions-container.has-reactions.on-profile, #facebook body .timelineUnitContainer .reactions-container.has-reactions.on-profile {
 	margin: 10px -12px 0 -12px;
 	padding: 4px 5px 10px 5px;
 	border-top: 1px solid #E1E2E3;

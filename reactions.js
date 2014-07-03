@@ -32,7 +32,7 @@ These are the new reactions that this plugin adds to Facebook:
 
 
 (function ($) {
-	var currentAuthor = $('.UFIReplyActorPhotoWrapper img.UFIActorImage').eq(0).attr('alt');
+	var currentAuthor;
 
 	var reactionSvgsMap = {
 		'dislike': '<svg version="1.1" viewBox="0 0 30 30" preserveAspectRatio="xMinYMin meet"><path style="fill:#FFFFFF;stroke:#000000;stroke-width:0.8;stroke-miterlimit:10;" d="M9.69,8.097c0,0,4.34,0.946,5.508,0	c1.169-0.946,2.504-2.155,3.839-2.247c1.336-0.091,4.841-0.191,5.787,1.333s1.947,6.088,0.667,8.592c0,0-1.983,0.647-4.876,0.591	l0.174,4.473c0,0,0.011,1.629-1.176,1.521c-1.188-0.107-1.417-0.854-1.719-3.747c0,0,0.142-1.28-0.582-2.115	c-0.724-0.835-3.505-1.168-4.284-1.168s-2.616-0.056-2.616-0.056L9.69,8.097z"/><path style="fill:#98ADCA;stroke:#000000;stroke-width:0.8;stroke-miterlimit:10;" d="M5.095,9.988c0,0-0.358-2.781,0.532-3.672	c0.891-0.891,4.006-0.278,4.34,0c0.335,0.278,0.78,2.337,0.78,3.672c0,1.336,0.5,4.619,0.556,5.843c0.036,0.61-0.115,0.947-1,1.112	c-1.225-0.11-4.23,0.667-4.731-0.611C5.07,15.052,5.095,9.988,5.095,9.988z"/></svg>',
@@ -63,13 +63,18 @@ These are the new reactions that this plugin adds to Facebook:
 			// profile page
 			$stories = $('.fbTimelineUnit');
 			page = 'profile';
-		} else if (location.search.indexOf('notif_t') > -1) {
+		} else if ($('body').hasClass("pagesTimelineLayout") && $('body').find('.timelineUnitContainer').length) {
+			$stories = $('.timelineUnitContainer');
+			page = 'page';
+		} else {
 			// notification page
 			$stories = $('.userContentWrapper');
 			page = 'notification';
 		}
 
 		if ($stories && $stories.length) {
+			// this is recomputed because the current author can change on a fb page
+			currentAuthor = $('.UFIReplyActorPhotoWrapper img.UFIActorImage').eq(0).attr('alt');
 
 			var filteredStories = $stories.filter(function (index) {
 				return !$(this).find('.uiCollapsedList').length;
@@ -99,7 +104,7 @@ These are the new reactions that this plugin adds to Facebook:
 		reactionButtonsHtmlArray.push('<span class="little-nub-border"><span class="little-nub"></span></span>');
 		reactionButtonsHtmlArray.push('</span>');
 
-		if (page === 'profile') {
+		if (page === 'profile' || page === 'page') {
 			var reactButtonHtml = reactionButtonsHtmlArray.join('') + ' · <a class="react-button on-profile">React</a>';
 
 			var containerOffsetLeft = $theContainer.offset().left;
@@ -141,7 +146,7 @@ These are the new reactions that this plugin adds to Facebook:
 	function addReactionsContainer ($likeButtonElement, page) {
 		var html;
 
-		if (page === 'profile') {
+		if (page === 'profile' || page === 'page') {
 			html = '<div class="UFIRow reactions-container on-profile"></div>';
 		} else {
 			html = '<div class="UFIRow reactions-container"></div>';
@@ -166,7 +171,9 @@ These are the new reactions that this plugin adds to Facebook:
 						.attr('href');
 
 		if (typeof storyId === 'string') {
-			return storyId.replace(/^https:\/\/www\.facebook\.com/, '');
+			var formattedStoryId = storyId.replace(/^https:\/\/www\.facebook\.com/, '');
+
+			return encodeURIComponent(formattedStoryId);
 		} else {
 			return null;
 		}
@@ -178,7 +185,9 @@ These are the new reactions that this plugin adds to Facebook:
 				method: "GET",
 				action: "xhttp",
 				url: "http://reactions.us/getReactions",
-				data: {id: storyId}
+				data: {
+					id: storyId
+				}
 			}, function(response) {
 				if (response.success && response.data) {
 					callback(response.data);
@@ -189,7 +198,7 @@ These are the new reactions that this plugin adds to Facebook:
 		}
 	}
 
-	function saveReaction (reactionType, author, storyId) {
+	function saveReaction (reactionType, author, storyId, $storyElement) {
 		if (reactionType && author && storyId) {
 			chrome.runtime.sendMessage({
 				method: "POST",
@@ -201,12 +210,14 @@ These are the new reactions that this plugin adds to Facebook:
 					author: author
 				}
 			}, function(response) {
-				// do something here?
+				if (chrome.runtime.lastError) {
+					showError('There was an error saving your reaction, please refresh the page.' , $storyElement);
+				}
 			});
 		}
 	}
 
-	function deleteReaction (reactionType, author, storyId) {
+	function deleteReaction (reactionType, author, storyId, $storyElement) {
 		if (reactionType && author && storyId) {
 			chrome.runtime.sendMessage({
 				method: "POST",
@@ -218,7 +229,9 @@ These are the new reactions that this plugin adds to Facebook:
 					author: author
 				}
 			}, function(response) {
-				// do something here?
+				if (chrome.runtime.lastError) {
+					showError('There was an error deleting your reaction, please refresh the page.' , $storyElement);
+				}
 			});
 		}
 	}
@@ -229,13 +242,16 @@ These are the new reactions that this plugin adds to Facebook:
 		if ($likeButtonElement && $likeButtonElement.length) {
 			var storyId = getStoryId($storyElement);
 
-			if (storyId) {
-				addReactButtonToStory($storyElement, $likeButtonElement, page);
-				var $reactionsContainer = addReactionsContainer($likeButtonElement, page);
-				$storyElement.attr('data-story-reaction-id', storyId);
-				getReactionsForStory(storyId, function (reactions) {
-					addReactionsToStory(reactions, $reactionsContainer, $storyElement);
-				});
+			if (storyId 
+				&& typeof storyId == 'string'
+				&& storyId.length > 3
+				&& !$storyElement.find('.react-button').length) {
+					addReactButtonToStory($storyElement, $likeButtonElement, page);
+					var $reactionsContainer = addReactionsContainer($likeButtonElement, page);
+					$storyElement.attr('data-story-reaction-id', storyId);
+					getReactionsForStory(storyId, function (reactions) {
+						addReactionsToStory(reactions, $reactionsContainer, $storyElement);
+					});
 			}
 		}
 	}
@@ -364,8 +380,11 @@ These are the new reactions that this plugin adds to Facebook:
 		return false;
 	}
 
-	function displayCannotPostReactionMessage ($reactionsContainer) {
-		var $msg = $('<div class="reaction-add-error">Please don\'t post the same reaction on the same post more than once.</div>');
+	function showError (message, $storyElement) {
+		var $reactionsContainer = $storyElement.find('.reactions-container').first();
+
+		var msg = $('<div class="reaction-add-error"></div>')
+					.text(msg);
 
 		$reactionsContainer.append($msg);
 
@@ -419,32 +438,43 @@ These are the new reactions that this plugin adds to Facebook:
 	var startedScrolling = false;
 
 	function storiesAreLoaded (callback) {
-		if (!startedScrolling) {
-			if ($('.userContentWrapper').length) {
+		var $actorImages = $('.UFIReplyActorPhotoWrapper img.UFIActorImage');
+
+		if (($('.userContentWrapper').length 
+			|| $('[data-insertion-position]').length 
+			|| $('.timelineUnitContainer').length 
+			|| $('.fbTimelineUnit').length) 
+			&& $actorImages.length) {
 				if (callback) {
 					callback();
 				}
-			} else {
-				setTimeout(function () {
-					storiesAreLoaded(callback);
-				}, 300);
-			}
+		} else {
+			setTimeout(function () {
+				storiesAreLoaded(callback);
+			}, 300);
 		}
 	}
 
-	storiesAreLoaded(findStories);
+	storiesAreLoaded(function ($actorImages) {
+		findStories();
+		
+		$(window).scroll(function () {
+			startedScrolling = true;
+		});
 
-	$(window).scroll(function () {
-		startedScrolling = true;
+		var lastTime = 0;
+		setInterval(function () {
+			var timeNow = Date.now();
+
+			if (startedScrolling || timeNow - lastTime > 999) {
+				startedScrolling = false;
+				lastTime = timeNow;
+
+				findStories();
+			}
+		}, 250);
 	});
 
-	setInterval(function () {
-		if (startedScrolling) {
-			startedScrolling = false;
-
-			findStories();
-		}
-	}, 250);
 
 	/***************************************
 	 *                                     *
@@ -500,14 +530,14 @@ These are the new reactions that this plugin adds to Facebook:
 			}
 
 			addReactionToStory(reactionType, currentAuthor, $reactionsContainer, $storyElement);
-			saveReaction(reactionType, currentAuthor, storyId);
+			saveReaction(reactionType, currentAuthor, storyId, $storyElement);
 
 			// pop the popup
 			if (countTotalNumberOfReactions(storyReactions) === 3) {
 				askToPostNotificationToStory($storyElement);
 			}
 		} else {
-			displayCannotPostReactionMessage($reactionsContainer);
+			showError("Please don't post the same reaction on the same post more than once.", $storyElement);
 		}
 	});
 
@@ -529,7 +559,7 @@ These are the new reactions that this plugin adds to Facebook:
 				authorWasRemoved = true;
 			}
 
-			deleteReaction(reactionType, currentAuthor, storyId);
+			deleteReaction(reactionType, currentAuthor, storyId, $storyElement);
 			removeReactionFromContainer(reactionType, currentAuthor, authorWasRemoved, storyReactions, $reactionsContainer, $storyElement);
 		}
 
@@ -587,45 +617,6 @@ These are the new reactions that this plugin adds to Facebook:
 
 		return commentAreaIsVisible;
 	}
-
-
-	/**
-	 * Creates and returns a new, throttled version of the passed function, that, 
-	 * when invoked repeatedly, will only actually call the original function at most 
-	 * once per every wait milliseconds. Useful for rate-limiting events that occur 
-	 * faster than you can keep up with.
-	 *
-	 * from Underscore.js 1.5.0
-	 * (c) 2011-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-	 * Underscore may be freely distributed under the MIT license.
-	 */
-	function throttle (func, wait, options) {
-		var context, args, result;
-		var timeout = null;
-		var previous = 0;
-		options || (options = {});
-		var later = function() {
-			previous = new Date;
-			timeout = null;
-			result = func.apply(context, args);
-		};
-		return function() {
-			var now = new Date;
-			if (!previous && options.leading === false) previous = now;
-			var remaining = wait - (now - previous);
-			context = this;
-			args = arguments;
-			if (remaining <= 0) {
-				clearTimeout(timeout);
-				timeout = null;
-				previous = now;
-				result = func.apply(context, args);
-			} else if (!timeout && options.trailing !== false) {
-				timeout = setTimeout(later, remaining);
-			}
-			return result;
-		};
-	};
 
 	String.prototype.capitalize = function() {
 	    return this.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
