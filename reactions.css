@@ -172,6 +172,23 @@ body .reactions-container.has-reactions.on-profile, #facebook body .timelineUnit
 	opacity: 1;
 }
 
+.reactions-error {
+	position: fixed;
+	top: 50px;
+	left: 50%;
+	z-index: 999;
+	width: 800px;
+}
+
+.reactions-error .message {
+	position: relative;
+	left: -50%;
+	background: red;
+	padding: 10px 14px;
+	color: white;
+	font-size: 16px;
+}
+
 #reactions-ask-to-notify-overlay {
 	position: fixed;
 	width: 100%;

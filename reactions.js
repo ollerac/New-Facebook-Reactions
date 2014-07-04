@@ -189,6 +189,10 @@ These are the new reactions that this plugin adds to Facebook:
 					id: storyId
 				}
 			}, function(response) {
+				if (chrome.runtime.lastError) {
+					showError('There was an error connecting to the Facebook Reactions extension. Please reload if you want it to work.');
+				}
+
 				if (response.success && response.data) {
 					callback(response.data);
 				}
@@ -211,7 +215,7 @@ These are the new reactions that this plugin adds to Facebook:
 				}
 			}, function(response) {
 				if (chrome.runtime.lastError) {
-					showError('There was an error saving your reaction, please refresh the page.' , $storyElement);
+					showErrorForStory('There was an error saving your reaction, please refresh the page.' , $storyElement);
 				}
 			});
 		}
@@ -230,7 +234,7 @@ These are the new reactions that this plugin adds to Facebook:
 				}
 			}, function(response) {
 				if (chrome.runtime.lastError) {
-					showError('There was an error deleting your reaction, please refresh the page.' , $storyElement);
+					showErrorForStory('There was an error deleting your reaction, please refresh the page.' , $storyElement);
 				}
 			});
 		}
@@ -383,11 +387,11 @@ These are the new reactions that this plugin adds to Facebook:
 		return false;
 	}
 
-	function showError (message, $storyElement) {
+	function showErrorForStory (message, $storyElement) {
 		var $reactionsContainer = $storyElement.find('.reactions-container').first();
 
-		var msg = $('<div class="reaction-add-error"></div>')
-					.text(msg);
+		var $msg = $('<div class="reaction-add-error"></div>')
+					.text(message);
 
 		$reactionsContainer.append($msg);
 
@@ -398,6 +402,22 @@ These are the new reactions that this plugin adds to Facebook:
 		setTimeout(function () {
 			$msg.remove();
 		}, 5000);
+	}
+
+	function showError (message) {
+		var $errorDiv = $('<div class="reactions-error"></div>');
+		var $msgDiv = $('<div class="message"></div>')
+						.text(message);
+
+		$('body').append($errorDiv.append($msgDiv));
+
+		setTimeout(function () {
+			$errorDiv.addClass('load');
+		}, 0);
+
+		setTimeout(function () {
+			$errorDiv.remove();
+		}, 7000);
 	}
 
 	function countTotalNumberOfReactions (storyReactions) {
@@ -503,6 +523,8 @@ These are the new reactions that this plugin adds to Facebook:
 
 				$element.data('isExpanded', true);
 			}
+
+			event.preventDefault();
 		} else {
 			$('.little-clickable-buttons').hide();
 			$('.react-button').data('isExpanded', false);
@@ -540,8 +562,10 @@ These are the new reactions that this plugin adds to Facebook:
 				askToPostNotificationToStory($storyElement);
 			}
 		} else {
-			showError("Please don't post the same reaction on the same post more than once.", $storyElement);
+			showErrorForStory("Please don't post the same reaction on the same post more than once.", $storyElement);
 		}
+
+		event.preventDefault();
 	});
 
 	$('body').on('click', '.little-container[data-can-delete-reaction] .delete', function (event) {
@@ -566,11 +590,14 @@ These are the new reactions that this plugin adds to Facebook:
 			removeReactionFromContainer(reactionType, currentAuthor, authorWasRemoved, storyReactions, $reactionsContainer, $storyElement);
 		}
 
+		event.preventDefault();
 	});
 
 	$('body').on('click', '#reactions-ask-to-notify-overlay, #reactions-ask-to-notify .close-modal', function (event) {
 		$('#reactions-ask-to-notify-overlay').remove();
 		$('#reactions-ask-to-notify').remove();
+
+		event.preventDefault();
 	});
 
 	$('body').on('click', '#reactions-ask-to-notify .post-notification', function (event) {	
@@ -602,6 +629,8 @@ These are the new reactions that this plugin adds to Facebook:
 					.css('min-height', '45px');
 			});
 		}
+
+		event.preventDefault();
 	});	
 
 	function checkIfCommentAreaIsVisible ($topLevelCommentArea, deferred, howManyTimesToCheck) {
