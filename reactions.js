@@ -625,8 +625,8 @@ These are the new reactions that this plugin adds to Facebook:
 
 			checkIfCommentAreaIsVisible($topLevelCommentArea).done(function () {
 				$topLevelCommentArea
-					.val('You have 3 new reactions on this post. See them here: http://reactions.us/story/' + storyId)
-					.css('min-height', '45px');
+					.val('You have 3 new reactions on this post. See them here: http://reactions.us/story?id=' + storyId)
+					.css('min-height', '58px');
 			});
 		}
 
