@@ -3,7 +3,7 @@
 	"name": "Facebook Reactions",
 	"short_name": "FB Reactions",
 	"description": "Express your emotional reactions on Facebook with dislike, express doubt, stare creeplily, throw tomato, etc.",
-	"version": "1.1",
+	"version": "2.0",
 	"permissions": [
 		"https://*.facebook.com/",
 		"http://reactions.us/*"
