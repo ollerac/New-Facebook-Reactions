@@ -9,6 +9,8 @@
  *
  * from: http://stackoverflow.com/questions/7699615/
  */
+
+
 chrome.runtime.onMessage.addListener(function(request, sender, callback) {
     if (request.action == "xhttp") {
         var method = request.method ? request.method.toUpperCase() : 'GET';

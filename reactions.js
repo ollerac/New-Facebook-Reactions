@@ -30,7 +30,6 @@ These are the new reactions that this plugin adds to Facebook:
 
 *******************************************************************************/
 
-
 (function ($) {
 	var currentAuthor;
 
@@ -61,7 +60,7 @@ These are the new reactions that this plugin adds to Facebook:
 			page = 'home';
 		} else if ($('a[href="' + window.location.href.replace(/\?.*/, '') + '/friends"]').length > 2) {
 			// profile page
-			$stories = $('.fbTimelineUnit');
+			$stories = $('.userContentWrapper');
 			page = 'profile';
 		} else if ($('body').hasClass("pagesTimelineLayout") && $('body').find('.timelineUnitContainer').length) {
 			$stories = $('.timelineUnitContainer');
@@ -104,7 +103,7 @@ These are the new reactions that this plugin adds to Facebook:
 		reactionButtonsHtmlArray.push('<span class="little-nub-border"><span class="little-nub"></span></span>');
 		reactionButtonsHtmlArray.push('</span>');
 
-		if (page === 'profile' || page === 'page') {
+		if (page === 'page') {
 			var reactButtonHtml = reactionButtonsHtmlArray.join('') + ' · <a class="react-button on-profile">React</a>';
 
 			var containerOffsetLeft = $theContainer.offset().left;
@@ -153,8 +152,10 @@ These are the new reactions that this plugin adds to Facebook:
 		}
 
 		return $likeButtonElement
-				.parents('.clearfix')
-				.eq(0)
+				.parent()
+				.parent()
+				.parent()
+				.parent()
 				.after(html)
 				.parent()
 				.find('.reactions-container')
@@ -255,7 +256,6 @@ These are the new reactions that this plugin adds to Facebook:
 					addReactButtonToStory($storyElement, $likeButtonElement, page);
 
 					var $reactionsContainer = addReactionsContainer($likeButtonElement, page);
-
 					getReactionsForStory(storyId, function (reactions) {
 						addReactionsToStory(reactions, $reactionsContainer, $storyElement);
 					});
