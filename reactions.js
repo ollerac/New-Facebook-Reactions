@@ -72,6 +72,8 @@ These are the new reactions that this plugin adds to Facebook:
 		}
 
 		if ($stories && $stories.length) {
+			$stories.addClass('fb-reaction-story');
+
 			// this is recomputed because the current author can change on a fb page
 			currentAuthor = $('.UFIReplyActorPhotoWrapper img.UFIActorImage').eq(0).attr('alt');
 
@@ -88,75 +90,26 @@ These are the new reactions that this plugin adds to Facebook:
 		}
 	}
 
-	function addReactButtonToStory ($storyElement, $likeButtonElement, page) {
+	function addReactionsContainer ($storyElement, page) {
 		var reactionButtonsHtmlArray = [];
 		var theKeys = Object.keys(reactionSvgsMap);
-		var $theContainer = $likeButtonElement.parents('form').eq(0);
-
-		// assemble reaction buttons!
-		reactionButtonsHtmlArray.push('<span class="little-clickable-buttons">');
-
-		theKeys.forEach(function (name, index) {
-			reactionButtonsHtmlArray.push('<a title="' + name + '" class="little-clickable-button">' + reactionSvgsMap[name] + '</a>');
-		});
-
-		reactionButtonsHtmlArray.push('<span class="little-nub-border"><span class="little-nub"></span></span>');
-		reactionButtonsHtmlArray.push('</span>');
-
-		if (page === 'page') {
-			var reactButtonHtml = reactionButtonsHtmlArray.join('') + ' · <a class="react-button on-profile">React</a>';
-
-			var containerOffsetLeft = $theContainer.offset().left;
-
-			var $uiActionLinks = $theContainer
-									.data('storyElement', $storyElement)
-									.css('position', 'relative')
-									.find('.UIActionLinks')
-									.first();
-
-			var uiActionLinksOffsetRight = $uiActionLinks.width();
-
-			$uiActionLinks
-				.append(reactButtonHtml)
-				.find('.little-nub-border')
-				.css({
-					left: uiActionLinksOffsetRight - 36 + 'px',
-					right: 'auto'
-				});
-
-		} else {
-			var reactButtonHtml = reactionButtonsHtmlArray.join('') + '<a class="react-button">React</a>';
-
-			// calculate position top for react button
-			var topPositionLikeButton = $likeButtonElement.offset().top;
-			var topPositionContainer = $theContainer.offset().top;
-			var topPositionReactButton = topPositionLikeButton - topPositionContainer;
-
-			$theContainer
-				.data('storyElement', $storyElement)
-				.css('position', 'relative')
-				.append(reactButtonHtml)
-				.find('.react-button')
-				.css('top', topPositionReactButton + 'px');
-
-		}
-	}
-
-	function addReactionsContainer ($likeButtonElement, page) {
-		var html;
 
 		if (page === 'profile' || page === 'page') {
-			html = '<div class="UFIRow reactions-container on-profile"></div>';
+			reactionButtonsHtmlArray.push('<div class="reactions-container on-profile">');
 		} else {
-			html = '<div class="UFIRow reactions-container"></div>';
+			reactionButtonsHtmlArray.push('<div class="reactions-container">');
 		}
 
-		return $likeButtonElement
-				.parent()
-				.parent()
-				.parent()
-				.parent()
-				.after(html)
+		theKeys.forEach(function (name, index) {
+			reactionButtonsHtmlArray.push('<a title="' + name + '" class="little-clickable-button">');
+			reactionButtonsHtmlArray.push(reactionSvgsMap[name]);
+			reactionButtonsHtmlArray.push('<div class="little-number"></div>');
+			reactionButtonsHtmlArray.push('<a class="delete"></a>');
+			reactionButtonsHtmlArray.push('</a>');
+		});
+
+		return $storyElement
+				.append(reactionButtonsHtmlArray.join(''))
 				.parent()
 				.find('.reactions-container')
 				.eq(0);
@@ -242,24 +195,16 @@ These are the new reactions that this plugin adds to Facebook:
 	}
 
 	function aNewStoryWasFound ($storyElement, page) {
-		$likeButtonElement = $storyElement.find('.UFILikeLink').not('.accessible_elem').first();
+		var storyId = getStoryId($storyElement);
 
-		if ($likeButtonElement && $likeButtonElement.length) {
-			var storyId = getStoryId($storyElement);
+		if (storyId && typeof storyId == 'string' && storyId.length > 3) {
+				$storyElement.attr('data-story-reaction-id', storyId);
 
-			if (storyId 
-				&& typeof storyId == 'string'
-				&& storyId.length > 3
-				&& !$storyElement.find('.react-button').length) {
-					$storyElement.attr('data-story-reaction-id', storyId);
+				var $reactionsContainer = addReactionsContainer($storyElement, page);
 
-					addReactButtonToStory($storyElement, $likeButtonElement, page);
-
-					var $reactionsContainer = addReactionsContainer($likeButtonElement, page);
-					getReactionsForStory(storyId, function (reactions) {
-						addReactionsToStory(reactions, $reactionsContainer, $storyElement);
-					});
-			}
+				getReactionsForStory(storyId, function (reactions) {
+					addReactionsToStory(reactions, $reactionsContainer, $storyElement);
+				});
 		}
 	}
 
@@ -267,7 +212,7 @@ These are the new reactions that this plugin adds to Facebook:
 		var reactions = $storyElement.data('storyReactions');
 		var reactionAuthors = reactions[reactionType];
 		var reactionCount = reactionAuthors.length;
-		var $existingReaction = $reactionsContainer.children('.little-container[data-reaction-type="' + reactionType + '"]').eq(0);
+		var $existingReaction = $reactionsContainer.children('.little-clickable-button[title="' + reactionType + '"]').eq(0);
 		var titleString = reactionType.capitalize();
 		var canDeleteReaction = reactionAuthors.indexOf(currentAuthor) >= 0;
 
@@ -534,7 +479,7 @@ These are the new reactions that this plugin adds to Facebook:
 	$('body').on('click', '.little-clickable-button', function (event) {
 		var $littleClickableButton = $(this);
 		var reactionType = $littleClickableButton.attr('title');
-		var $storyElement = $littleClickableButton.parents('form').first().data('storyElement');
+		var $storyElement = $littleClickableButton.parent().parent();
 		var storyId = $storyElement.attr('data-story-reaction-id');
 		var storyReactions = $storyElement.data('storyReactions');
 		var reactionIsAlreadyThere = checkIfReactionIsAlreadyThere(reactionType, currentAuthor, storyReactions);
